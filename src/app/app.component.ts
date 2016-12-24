@@ -1,6 +1,11 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, NgZone } from '@angular/core';
 import { select as d3select, mouse as d3mouse } from 'd3-selection';
-import { scaleLinear } from 'd3-scale';
+import { scaleLinear } from 'd3-scale';
+
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/fromEvent';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/debounceTime';
 
 @Component({
   selector: 'app-root',
@@ -20,29 +25,42 @@ export class AppComponent implements OnInit {
 
   @ViewChild('svg') svgRef: ElementRef;
 
+  constructor(private zone: NgZone) { }
+
   ngOnInit() {
-    d3select(this.svgRef.nativeElement)
-      .on('mousemove', () => this.mouseMove());
+    Observable
+      .fromEvent(this.svgRef.nativeElement, 'mousemove')
+      .debounceTime(6)
+      // .do((event) => console.log(event))
+      .subscribe(this.zone.runOutsideAngular(
+        () => (ev: MouseEvent) => {
+          this.mouseMove(ev.clientX, ev.clientY);
+        })
+      );
+
+
+    // d3select(this.svgRef.nativeElement)
+    // .on('mousemove', () => this.mouseMove());
     this.next();
   }
 
   private next() {
-    if (this.currentMax < this.realMax) {
-      this.currentMax++;
-      setTimeout(() => this.next(), 500);
-    }
+  if (this.currentMax < this.realMax) {
+    this.currentMax++;
+    setTimeout(() => this.next(), 500);
   }
+}
 
-  private mouseMove() {
-    const [x, y] = d3mouse(this.svgRef.nativeElement);
-    const scaleFactor = scaleLinear()
-      .domain([this.height, 0])
-      .range([0, .8]);
-    const scaleLean = scaleLinear()
-      .domain([0, this.width / 2, this.width])
-      .range([.5, 0, -.5]);
-    this.heightFactor = scaleFactor(y);
-    this.lean = scaleLean(x);
-  }
+  private mouseMove(x, y) {
+  // const [x, y] = d3mouse(this.svgRef.nativeElement);
+  const scaleFactor = scaleLinear()
+    .domain([this.height, 0])
+    .range([0, .8]);
+  const scaleLean = scaleLinear()
+    .domain([0, this.width / 2, this.width])
+    .range([.5, 0, -.5]);
+  this.heightFactor = scaleFactor(y);
+  this.lean = scaleLean(x);
+}
 
 }

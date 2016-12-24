@@ -7,22 +7,8 @@
 <svg:g
   app-pythagoras
   *ngIf="lvl < maxlvl - 1 && nextLeft >= 1"
-  [w]="nextLeft"
-  x="0"
-  [y]="-nextLeft"
-  [lvl]="lvl + 1"
-  [maxlvl]="maxlvl"
-  [heightFactor]="heightFactor"
-  [lean]="lean"
-  [left]="true" />
+  [s]="sL" />
 <svg:g
   app-pythagoras
   *ngIf="lvl < maxlvl - 1 && nextRight >= 1"
-  [w]="nextRight"
-  [x]="w - nextRight"
-  [y]="-nextRight"
-  [lvl]="lvl + 1"
-  [maxlvl]="maxlvl"
-  [heightFactor]="heightFactor"
-  [lean]="lean"
-  [right]="true" />
+  [s]="sR" />

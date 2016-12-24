@@ -20,7 +20,10 @@
       "styles": [
         "styles.css"
       ],
-      "scripts": [],
+      "scripts": [
+        "../node_modules/d3-scale/build/d3-scale.js",
+        "../node_modules/d3-selection/build/d3-selection.js"
+      ],
       "environments": {
         "source": "environments/environment.ts",
         "dev": "environments/environment.ts",

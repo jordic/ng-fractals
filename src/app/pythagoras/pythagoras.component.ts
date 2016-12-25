@@ -1,16 +1,17 @@
-import { ChangeDetectionStrategy, Component, HostBinding, Input, OnInit, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef,
+  Component, HostBinding, Input } from '@angular/core';
 import { interpolateViridis } from 'd3-scale';
 
-function deg(radians) {
+function deg(radians: number) {
   return radians * (180 / Math.PI);
-};
+}
 
-const memoizedCalc = function (): (any) => { nextRight: number, nextLeft: number, A: number, B: number } {
+const memoizedCalc = function (): (x: any) => { nextRight: number, nextLeft: number, A: number, B: number } {
   const memo = {};
 
-  const key = ({ w, heightFactor, lean }) => [w, heightFactor, lean].join('-');
+  const key = ({ w, heightFactor, lean }: PythagorasArgs) => [w, heightFactor, lean].join('-');
 
-  return (args) => {
+  return (args: PythagorasArgs) => {
     const memoKey = key(args);
 
     if (memo[memoKey]) {
@@ -33,82 +34,94 @@ const memoizedCalc = function (): (any) => { nextRight: number, nextLeft: number
   }
 } ();
 
+export interface PythagorasArgs {
+  w: number;
+  heightFactor: number;
+  lean: number;
+  x: number;
+  y: number;
+  lvl: number;
+  maxlvl: number;
+  left?: boolean;
+  right?: boolean;
+}
+
+
 @Component({
   selector: '[app-pythagoras]',
   templateUrl: './pythagoras.component.html',
   styleUrls: ['./pythagoras.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PythagorasComponent  {
+export class PythagorasComponent {
 
-  w: number = 80;
-  x: number;
-  y: number;
-  heightFactor: number;
-  lean: number;
-  left: boolean;
-  right: boolean;
-  lvl: number;
-  maxlvl: number;
+  rotate: string = '';
+  leftArgs: PythagorasArgs;
+  rightArgs: PythagorasArgs;
+  current: PythagorasArgs;
 
-  sL: any;
-  sR: any;
+  constructor(private cr: ChangeDetectorRef) {}
 
-  // @Input()
-  // s: any;
-
-  nextRight: number;
-  nextLeft: number;
-  A: number;
-  B: number;
-
-  // ngOnChanges() {
   @Input()
-  set s(s:any) {
-    Object.assign(this, s);
-    const calc = memoizedCalc({
-      w: this.w,
-      heightFactor: this.heightFactor,
-      lean: this.lean
-    });
-    this.nextRight = calc.nextRight;
-    this.nextLeft = calc.nextLeft;
-    this.A = calc.A;
-    this.B = calc.B;
+  set s(s: PythagorasArgs) {
 
-    this.sR = Object.assign({}, this.s, {
-      w: this.nextRight,
-      x: this.w = this.nextRight,
-      y: -this.nextRight,
-      lvl: this.lvl + 1,
-      right: true
+    // console.log(s)
+    if (!s) {
+      return;
+    }
+    if (s.lvl >= s.maxlvl || s.w < 1) {
+      return;
+    }
+
+    // console.log(s)
+    this.current = s;
+
+    const { nextRight, nextLeft, A, B } = memoizedCalc({
+      w: s.w,
+      heightFactor: s.heightFactor,
+      lean: s.lean
     });
 
-    this.sL = Object.assign({}, this.s, {
-      w: this.nextLeft,
+    if (s.left) {
+      this.rotate = `rotate(${-A} 0 ${s.w})`;
+    } else if (s.right) {
+      this.rotate = `rotate(${B} ${s.w} ${s.w})`;
+    }
+
+    this.leftArgs = {
+      w: nextLeft,
       x: 0,
-      y: -this.nextLeft,
-      lvl: this.lvl + 1,
+      y: -nextLeft,
+      lvl: s.lvl + 1,
+      maxlvl: s.maxlvl,
+      heightFactor: s.heightFactor,
+      lean: s.lean,
       left: true
-    });
+    };
+
+    this.rightArgs = {
+      w: nextRight,
+      x: s.w - nextRight,
+      y: -nextRight,
+      lvl: s.lvl + 1,
+      maxlvl: s.maxlvl,
+      heightFactor: s.heightFactor,
+      lean: s.lean,
+      right: true
+    };
 
   }
 
   @HostBinding('attr.transform') get transform() {
-    return `translate(${this.x} ${this.y}) ${this.getRotate()}`;
-  }
-
-  private getRotate() {
-    if (this.left) {
-      return `rotate(${-this.A} 0 ${this.w})`;
-    } else if (this.right) {
-      return `rotate(${this.B} ${this.w} ${this.w})`;
-    } else {
-      return '';
+    if (this.current) {
+      return `translate(${this.current.x} ${this.current.y}) ${this.rotate}`;
     }
+    return `translate(0 0) rotate(0 0 0)`;
   }
 
   getFill() {
-    return interpolateViridis(this.lvl / this.maxlvl);
+    if (this.current) {
+      return interpolateViridis(this.current.lvl / this.current.maxlvl);
+    }
   }
 }

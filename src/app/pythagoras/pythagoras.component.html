@@ -1,14 +1,11 @@
 <svg:rect
-  [attr.width]="w"
-  [attr.height]="w"
+  *ngIf="current"
+  [attr.width]="current.w"
+  [attr.height]="current.w"
   x="0"
   y="0"
   [style.fill]="getFill()" />
 <svg:g
-  app-pythagoras
-  *ngIf="lvl < maxlvl - 1 && nextLeft >= 1"
-  [s]="sL" />
+  app-pythagoras *ngIf="current" [s]="leftArgs" />
 <svg:g
-  app-pythagoras
-  *ngIf="lvl < maxlvl - 1 && nextRight >= 1"
-  [s]="sR" />
+  app-pythagoras *ngIf="current" [s]="rightArgs" />

@@ -8,12 +8,14 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/observable/interval';
 import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/take';
 import 'rxjs/add/operator/combineLatest';
 
+import { animationFrame } from 'rxjs/scheduler/animationFrame';
 
 @Component({
   selector: 'app-root',
@@ -29,19 +31,23 @@ export class AppComponent implements OnInit {
   heightFactor = 0;
   lean = 0;
   stream$: Observable<any>;
-  realMax = 12;
+  realMax = 11;
 
   @ViewChild('svg') svgRef: ElementRef;
 
   constructor(
     private zone: NgZone, private cr: ChangeDetectorRef) {
-    }
+  }
 
   ngOnInit() {
     this.zone.runOutsideAngular(() => {
       this.stream$ = Observable
         .fromEvent(this.svgRef.nativeElement, 'mousemove')
-        // .debounceTime(10)
+        .distinctUntilChanged((x: MouseEvent, y: MouseEvent) => {
+          return (Math.round(x.offsetX) === Math.round(y.offsetX) ||
+            Math.round(x.offsetY) === Math.round(y.offsetY));
+        })
+        // .debounceTime(2)
         .map((mouseEvent: MouseEvent) => {
           const { offsetX: x, offsetY: y } = mouseEvent;
           const scaleFactor = scaleLinear().domain([this.height, 0]).range([0, .8]);
@@ -61,7 +67,7 @@ export class AppComponent implements OnInit {
           x: this.width / 2 - 40,
           y: this.height - 80,
           lvl: 0,
-          maxlvl,
+          maxlvl: maxlvl + 1,
           left: false,
           right: false
         }));

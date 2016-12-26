@@ -6,6 +6,7 @@
   y="0"
   [style.fill]="getFill()" />
 <svg:g
-  app-pythagoras *ngIf="current && rightArgs.lvl < rightArgs.maxlvl && rightArgs.w > 2" [s]="leftArgs" />
+  app-pythagoras
+  *ngIf="current && leftArgs.lvl < leftArgs.maxlvl && leftArgs.w > 5" [s]="leftArgs" />
 <svg:g
-  app-pythagoras *ngIf="current && rightArgs.lvl < rightArgs.maxlvl && rightArgs.w > 2" [s]="rightArgs" />
+  app-pythagoras *ngIf="current && rightArgs.lvl < rightArgs.maxlvl && rightArgs.w > 5" [s]="rightArgs" />

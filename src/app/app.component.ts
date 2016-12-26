@@ -1,6 +1,6 @@
 import {
   Component, ElementRef, OnInit,
-  ViewChild, NgZone, ChangeDetectionStrategy, ChangeDetectorRef
+  ViewChild, NgZone, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef
 } from '@angular/core';
 import { scaleLinear } from 'd3-scale';
 
@@ -22,7 +22,7 @@ import { animationFrame } from 'rxjs/scheduler/animationFrame';
 export function filter(x: MouseEvent, y: MouseEvent): boolean {
   const dx = Math.abs(x.offsetX - y.offsetX);
   const dy = Math.abs(x.offsetY - y.offsetY);
-  return ((dx + dy) >= 10 ? false : true);
+  return ((dx + dy) >= 2 ? false : true);
 }
 
 /*
@@ -51,15 +51,17 @@ export class AppComponent implements OnInit {
   @ViewChild('svg') svgRef: ElementRef;
 
   constructor(
-    private zone: NgZone, private cr: ChangeDetectorRef) {
+    private zone: NgZone,
+    private cr: ChangeDetectorRef, private app: ApplicationRef) {
+      // this.cr.detach();
   }
 
   ngOnInit() {
     this.zone.runOutsideAngular(() => {
       this.stream$ = Observable
-        .fromEvent(this.svgRef.nativeElement, 'mousemove')
-        .distinctUntilChanged(filter)
-        .debounceTime(2)
+        .fromEvent(this.svgRef.nativeElement, 'mousemove', animationFrame)
+        // .distinctUntilChanged(filter)
+        // .debounceTime(2)
         .switchMap((mouseEvent: MouseEvent) => {
           const { offsetX: x, offsetY: y } = mouseEvent;
           const scaleFactor = scaleLinear().domain([this.height, 0]).range([0, .8]);

@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef,
-  Component, HostBinding, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy, ChangeDetectorRef,
+  Component, HostBinding, Input
+} from '@angular/core';
 import { interpolateViridis } from 'd3-scale';
 
 function deg(radians: number) {
@@ -60,7 +62,9 @@ export class PythagorasComponent {
   rightArgs: PythagorasArgs;
   current: PythagorasArgs;
 
-  constructor(private cr: ChangeDetectorRef) {}
+  constructor(private cr: ChangeDetectorRef) {
+    this.cr.detach();
+  }
 
   @Input()
   set s(s: PythagorasArgs) {
@@ -125,3 +129,5 @@ export class PythagorasComponent {
     }
   }
 }
+
+

@@ -1,31 +1,128 @@
 # NgFractals
 
-This project was generated with [angular-cli](https://github.com/angular/angular-cli) version 1.0.0-beta.21.
+December 28th,
 
-## Development server
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+I have take the project builded by @teropa and I tried to omptimize as much as possible the rendering performance of the ui.
 
-## Code scaffolding
+See the demo at:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive/pipe/service/class`.
+https://fractalng.tmpo.io/
 
-## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+## First clarification:
 
-## Running unit tests
+On the blog post:
+https://swizec.com/blog/animating-svg-nodes-react-preact-inferno-vue/swizec/7311
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Swizec says that the app seems too laggy, sure, the problem is that it has been run  without production neither AOT optmitzations. Just take the @teropa version and: 
 
-## Running end-to-end tests
+`
+npm install 
+node_modules/bin/ng run --aot --prod
+`
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
+And you will be able to see how the version is smooth... (better than react one for sure)
 
-## Deploying to Github Pages
 
-Run `ng github-pages:deploy` to deploy to Github Pages.
+## Steps from the initial
 
-## Further help
+First thing I've had done. Reactify the @teropa version. Angular can work more 
+or less the way cycle.js works.
+I just suspected thant I will get better results with this, but there is not too much 
+performance imrpovenent (perhaps a little but not too much). See that in @teropa version
+the recursive component is rendering without change detector (ChangedetectorStrategy.OnPush)
 
-To get more help on the `angular-cli` use `ng --help` or go check out the [Angular-CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+Anyway, Reactifing it, had allow me to try ideas on the main code. 
+But most of them had worked, but without too many gains: 
+
+1. Debounce input. Tried to debounceTime the mousemove input. This is not a good idea, 
+because you end up with a laggy version, not responding in real time to the mouse movements.
+
+2. Instead of debouncing by time, debounce by position changed, something like:
+
+```javascript
+export function filter(x: MouseEvent, y: MouseEvent): boolean {
+  const dx = Math.abs(x.offsetX - y.offsetX);
+  const dy = Math.abs(x.offsetY - y.offsetY);
+  return ((dx + dy) >= 10 ? false : true);
+}
+
+.fromEvent(element, 'mousemove')
+  .distinctUntilChanged(filter)
+
+```
+This works, because really debounces the input. At this example, the tree is rendered 
+only if there is a position change around 10px. You can try it an apply distinct values,
+and just see the results. But, anyway, this doesn't affect too much the overall performance.  
+
+The really bootleneck is not the data stream. Is the DOM and the operations we run on it.
+
+3. After digging inside each rendered frame ( when I started at around 100-140ms ). 
+What I found is that the most expensive calls are the creation and detruction of dom nodes.
+Angular AOT has some magic DOM recycling and pooling. But seems that is enought to get a 
+big performance gain. What I tried is to keep nodes in memory instead of destroying them, 
+On the template the change is something like:
+
+```
+  <svg:g
+  app-pythagoras
+   [ngClass]="{'hide': rightArgs.w <= 2}"
+   *ngIf="current && rightArgs.lvl < rightArgs.maxlvl"
+  [s]="rightArgs" />
+```
+
+By using ngClass (hide/show) on the node we are keeping the DOM full of nodes. 
+And just updating them on each frame. In general terms, performance is more predictable, 
+but low. You don't have really big long frames but, All frames becomes slower. 
+And application runs, at more or less 10fps seconds (constantly).
+(Keep in mind that we are mantaining a list of 2048 nodes and updating them on Real Time).
+
+4. But we can do better: we can mix both approaches. 
+Just keep in memory half of the list, and create the other half when needed. This 
+is the final code published, and must say that I'm super happy with the real performance.
+With this we improve the initial approach (because we are creating half of the elments),
+but also optimizes the secon (in memory) because we only have half of the elements.
+
+5. Some other cheats. As known .. is more performance to render things with rounded values,
+or fixed values than with all the decimal length. 
+
+6. fillColor, is a function that also can be memoized. (not sure how it affects) because if 
+you go to the timeline view you will find that the expensive parts on each frame are the
+DOM creation and manipulation. 
+
+
+
+## Conclusion
+
+Learned a lot of things and had have a fun time with this experiment. 
+I published the results and the final thoughts  just if someone is interested on looking at them.
+
+The cycle.js and Vue VDom are fast. I think that both are based on the same project.
+
+Using RxJs also allow us to switch the scheduler (We can go from the ASAP, currently) to 
+a requestAnimFrame, or sure is not diffucult to implment a new schedule that uses 
+the requestIdleWork to implement an async version.
+
+I miss a canvas rendered version, just to see the diferent 
+performance withing svg and canvas. I'm more or less sure, that with canvas, will get a 
+better framerate and general performance. 
+(Perhaps on the next days I will do one, using pixi.js)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

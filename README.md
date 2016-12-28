@@ -19,7 +19,7 @@ Swizec says that the app seems too laggy, sure, the problem is that it has been 
 
 `
 npm install &&
-node_modules/bin/ng run --aot --prod
+node_modules/.bin/ng serve --aot --prod
 `
 
 And you will be able to see how the version is smooth... (better than react one for sure)

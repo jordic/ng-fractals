@@ -7,6 +7,21 @@
   [style.fill]="getFill()" />
 <svg:g
   app-pythagoras
-  *ngIf="current && leftArgs.lvl < leftArgs.maxlvl && leftArgs.w > 5" [s]="leftArgs" />
+  *ngIf="current && leftArgs.lvl < leftArgs.maxlvl -1"
+  [ngClass]="{'hide': leftArgs.w <= 3}"
+  [s]="leftArgs" />
 <svg:g
-  app-pythagoras *ngIf="current && rightArgs.lvl < rightArgs.maxlvl && rightArgs.w > 5" [s]="rightArgs" />
+  app-pythagoras
+  [ngClass]="{'hide': rightArgs.w <= 3}"
+  *ngIf="current && rightArgs.lvl < rightArgs.maxlvl -1"
+  [s]="rightArgs" />
+<svg:g
+  app-pythagoras
+  *ngIf="current && leftArgs.lvl === leftArgs.maxlvl-1 && leftArgs.w > 3"
+  [s]="leftArgs" />
+<svg:g
+  app-pythagoras
+  *ngIf="current && rightArgs.lvl === rightArgs.maxlvl-1 && rightArgs.w > 3"
+  [s]="rightArgs" />
+
+

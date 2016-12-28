@@ -5,8 +5,19 @@ import {
 import { interpolateViridis } from 'd3-scale';
 
 function deg(radians: number) {
-  return radians * (180 / Math.PI);
+  return Math.round((radians * (180 / Math.PI)) * 10) / 10;
 }
+
+
+const fills = {};
+export function memoizeFill(level) {
+  if (fills[level]) {
+    return fills[level];
+  }
+  fills[level] = interpolateViridis(level);
+  return fills[level];
+}
+
 
 const memoizedCalc = function (): (x: any) => { nextRight: number, nextLeft: number, A: number, B: number } {
   const memo = {};
@@ -24,8 +35,8 @@ const memoizedCalc = function (): (x: any) => { nextRight: number, nextLeft: num
       const trigH = heightFactor * w;
 
       const result = {
-        nextRight: Math.sqrt(trigH ** 2 + (w * (.5 + lean)) ** 2),
-        nextLeft: Math.sqrt(trigH ** 2 + (w * (.5 - lean)) ** 2),
+        nextRight: Math.round(Math.sqrt(trigH ** 2 + (w * (.5 + lean)) ** 2) * 10) / 10,
+        nextLeft: Math.round(Math.sqrt(trigH ** 2 + (w * (.5 - lean)) ** 2) * 10) / 10,
         A: deg(Math.atan(trigH / ((.5 - lean) * w))),
         B: deg(Math.atan(trigH / ((.5 + lean) * w)))
       };
@@ -63,7 +74,7 @@ export class PythagorasComponent {
   current: PythagorasArgs;
 
   constructor(private cr: ChangeDetectorRef) {
-    this.cr.detach();
+    cr.detach();
   }
 
   @Input()
@@ -73,17 +84,18 @@ export class PythagorasComponent {
     if (!s) {
       return;
     }
-    if (s.lvl >= s.maxlvl || s.w < 1) {
+
+    if (s.w < 2) {
       return;
     }
 
     // console.log(s)
     this.current = s;
-
+    // console.log(this.current)
     const { nextRight, nextLeft, A, B } = memoizedCalc({
-      w: s.w,
-      heightFactor: s.heightFactor,
-      lean: s.lean
+      w: Math.round(s.w * 10) / 10,
+      heightFactor: Math.round(s.heightFactor * 100) / 100,
+      lean: Math.round(s.lean * 100) / 100
     });
 
     if (s.left) {
@@ -117,15 +129,15 @@ export class PythagorasComponent {
   }
 
   @HostBinding('attr.transform') get transform() {
-    if (this.current) {
+    if (this.current && this.current.lvl < this.current.maxlvl) {
       return `translate(${this.current.x} ${this.current.y}) ${this.rotate}`;
     }
     return `translate(0 0) rotate(0 0 0)`;
   }
 
   getFill() {
-    if (this.current) {
-      return interpolateViridis(this.current.lvl / this.current.maxlvl);
+    if (this.current && this.current.w) {
+      return memoizeFill(this.current.lvl / this.current.maxlvl);
     }
   }
 }

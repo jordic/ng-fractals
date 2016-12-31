@@ -9,6 +9,11 @@ See the demo at:
 
 https://fractalng.tmpo.io/
 
+## Other branches
+
+[tree/master] Main branch
+[tree/async] Points to a branch using async rendering (with requestIdleWork)
+
 
 ## First clarification:
 

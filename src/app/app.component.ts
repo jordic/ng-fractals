@@ -17,8 +17,11 @@ import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/take';
 import 'rxjs/add/operator/combineLatest';
+import 'rxjs/add/operator/observeOn';
 
-// import { animationFrame } from 'rxjs/scheduler/animationFrame';
+
+import { animationFrame } from 'rxjs/scheduler/animationFrame';
+import { requestIdle } from './scheduler';
 
 // export function filter(x: MouseEvent, y: MouseEvent): boolean {
 //   const dx = Math.abs(x.offsetX - y.offsetX);
@@ -61,6 +64,8 @@ export class AppComponent implements OnInit {
     this.zone.runOutsideAngular(() => {
       this.stream$ = Observable
         .fromEvent(this.svgRef.nativeElement, 'mousemove')
+        // .observeOn(animationFrame)
+        .observeOn(requestIdle)
         // .distinctUntilChanged(filter)
         .map((mouseEvent: MouseEvent) => {
           const { offsetX: x, offsetY: y } = mouseEvent;
